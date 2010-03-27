@@ -1,0 +1,239 @@
+#!/bin/bash
+##! @%@ file\ hey\ s
+usage(){
+cat << EOF
+Description:
+	compress files to following archive formats.
+Usage:
+	pack -format TARGET [ARCHIVE_NAME]
+Eample:
+	pack -rar mydirectory
+	pack -tgz mydirectory myarchive
+formats:
+	tar
+	tar.bz2| tbz2
+	tar.bz | tbz
+	tar.gz | tgz
+	bz2 | bzip2
+	gz  | gzip
+	lzh | lha
+	7z | 7zip
+	rar
+	zip
+	jar
+	z
+EOF
+}
+
+
+
+if [ $# -lt 1 ];then
+	usage
+	exit
+fi
+
+default_format="zip"
+
+if [ `echo "$1" | cut -c 1` = "-" ];then
+	if [ `echo "$1" | cut -c 2` = "-" ];then
+		format=`echo "$1" |cut -c 3- | tr "[:upper:]" "[:lower:]"`
+	else
+		format=`echo "$1" |cut -c 2- | tr "[:upper:]" "[:lower:]"`
+	fi
+	shift
+else
+	format="none"
+fi
+
+if [ "$format" = "help" ]||[ "$format" = "h" ];then
+	usage
+	exit
+fi
+
+case "$format" in
+	none|tar.bz2|tbz2|tar.bz|tbz|tar.gz|tgz|tar|bz2|bzip2|rar|gz|gzip|lzh|lha|zip|jar|z|7z|7zip);;
+	*)
+		echo "'$format' cannot be supported this program."
+		echo
+		usage
+		exit
+		;;
+esac
+
+if [ $# -lt 1 ];then
+	echo "\"pack\" takes 1 or 2 arguments without option-command ($# given)"
+	echo
+	usage
+	exit
+fi
+
+
+warning_format(){
+cat << EOF
+Warning!!:
+	There's difference in option format you ordered and archive name.
+	'pack' program will make as '$archive.$format'
+	format: $format (!= archive: $archive)
+
+EOF
+}
+
+error_target_is_NOT_found(){
+cat << EOF
+Error!!:
+	'$target' is NOT found.
+EOF
+exit
+}
+
+if [ $# -eq 1 ];then
+	target="$1"
+	if [ ! -e "$target" ];then
+		error_target_is_NOT_found
+	fi
+
+	if [ "$format" = "none" ];then
+		format="$default_format"
+	fi
+	archive="$1.$format"
+elif [ $# -eq 2 ];then
+	target="$1"
+	if [ ! -e "$target" ];then
+		error_target_is_NOT_found
+	fi
+	archive="$2"
+	archive_name=`echo $archive | tr "[:upper:]" "[:lower:]"`
+	case "$archive_name" in
+		*.tar.bz2|*.tbz2)
+			if [ "$format" = "none" ];then
+				format="tbz2"
+			elif [ "$format" != "tar.bz2" ]&&[ "$format" != "tbz2" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.tar.bz|*.tbz)
+			if [ "$format" = "none" ];then
+				format="tbz"
+			elif [ "$format" != "tar.bz" ]&&[ "$format" != "tbz" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.tar.gz|*.tgz)
+			if [ "$format" = "none" ];then
+				format="tgz"
+			elif [ "$format" != "tar.gz" ]&&[ "$format" != "tgz" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.tar)
+			if [ "$format" = "none" ];then
+				format="tar"
+			elif [ "$format" != "tar" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.bz2)
+			if [ "$format" = "none" ];then
+				format="bz2"
+			elif [ "$format" != "bz2" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.rar)
+			if [ "$format" = "none" ];then
+				format="rar"
+			elif [ "$format" != "rar" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.gz)
+			if [ "$format" = "none" ];then
+				format="gz"
+			elif [ "$format" != "gz" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.lzh)
+			if [ "$format" = "none" ];then
+				format="lzh"
+			elif [ "$format" != "lzh" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.zip)
+			if [ "$format" = "none" ];then
+				format="zip"
+			elif [ "$format" != "zip" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.7z)
+			if [ "$format" = "none" ];then
+				format="7zip"
+			elif [ "$format" != "7zip" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.jar)
+			if [ "$format" = "none" ];then
+				format="jar"
+			elif [ "$format" != "jar" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*.z)
+			if [ "$format" = "none" ];then
+				format="z"
+			elif [ "$format" != "z" ];then
+				warning_format
+				archive="$archive.$format"
+			fi
+			;;
+		*)
+			if [ "$format" = "none" ];then
+				format="$default_format"
+			fi
+			archive="$archive.$format"
+			;;
+	esac
+else
+	echo "\"pack\" takes at most 2 arguments without option-command ($# given)"
+	echo 
+	usage
+	exit
+fi
+
+echo "format: $format"
+echo "target: $target"
+echo "archive: $archive"
+
+case "$format" in
+	tar.bz2|tbz2) command="tar cvjf $archive $target" ;;
+	tar.bz|tbz)   command="tar cvzf $archive $target" ;;
+	tar.gz|tgz)   command="tar cvzf $archive $target" ;;
+	tar)          command="tar cvf $archive $target" ;;
+	bz2|bzip2)    command="bzip2 $archive $target" ;;
+	gz|gzip) command="gzip -v $archive $target" ;;
+	lzh|lha) command="lha -c $archive $target" ;;
+	rar) command="rar a -r $archive $target" ;;
+	zip) command="zip $archive $target" ;;
+	jar) command="jar cf $archive $target" ;;
+	7z|7zip) command="7z a $archive $target" ;;
+	z) command="compress -vr -name $archive $target" ;;
+	*);;
+esac
+
+echo "exec: $command"
+echo "----------------------------------"
+$command

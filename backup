@@ -1,0 +1,121 @@
+#!/bin/bash
+##! sh @%@ /media/SDB2-EXT3/ubn/backup5/
+
+
+prog=`basename $0`
+argc=$#
+
+usage(){
+cat << EOF
+Usage: $prog DEST_ROOT_DIR
+  '$prog' is auto backup script.
+EOF
+}
+
+
+if [ ! $argc -eq 1 ];then
+	usage
+	exit
+fi
+
+
+dest=$1
+dnam=`dirname "$dest"`
+bnam=`basename "$dest"`
+dest=`echo "$dnam/$bnam"`
+destHome="$dest$HOME"
+mkdir -p $dest
+mkdir -p $destHome
+
+ERRORLIST=
+
+RSYNC(){
+	if [ $# = 0 ];then
+		return 0
+	fi
+	fnam=`eval echo "\$\{$#\}"`
+	fnam=`eval echo "$fnam"`
+	if [ -e "$fnam" ];then
+		rsync -avR "$@" "$dest"
+	else
+		ERRORLIST="$ERRORLIST $fnam"
+		#echo "$fnam does NOT exist. Skip backup.\n"
+	fi
+}
+
+BACKUP_EXECUTE(){
+	RSYNC -r ~/.config
+	RSYNC -r ~/.conkycolors
+	RSYNC -r ~/.fluxbox
+	RSYNC -r ~/.fonts
+	RSYNC -r ~/.gimp-*/scripts
+	RSYNC -r ~/.gnome2/nautilus-scripts
+	RSYNC -r ~/.local/share
+	fx_prof=`echo ~/.mozilla/firefox/*.default`
+	RSYNC $fx_prof/bookmarks.html
+	RSYNC -r $fx_prof/ABE
+	RSYNC -r $fx_prof/bookmarkbackups
+	RSYNC -r $fx_prof/chrome
+	RSYNC -r $fx_prof/searchplugins
+	RSYNC -r ~/.themes
+	RSYNC -r ~/.uim.d
+	RSYNC -r ~/.vim
+	RSYNC -r ~/.vimperator
+	RSYNC -r ~/Documents
+	RSYNC -r ~/Graphics
+	RSYNC -r ~/Music
+	RSYNC -r ~/Templates
+	RSYNC -r ~/Videos
+	RSYNC -r ~/Works
+	RSYNC -r ~/bin
+	RSYNC --include='*.tar.gz' --exclude='*' ~/.icons
+	RSYNC ~/.Xdefaults
+	RSYNC ~/.bashrc
+	RSYNC ~/.bash_aliases
+	RSYNC ~/.bash_completion
+	RSYNC ~/.bash_environ
+	RSYNC ~/.bash_logout
+	RSYNC ~/.bash_profile
+	RSYNC ~/.gtk-bookmarks
+	RSYNC ~/.dircolorsrc
+	RSYNC ~/.gnuplot-wxt
+	RSYNC ~/.irbrc
+	RSYNC ~/.nvidia-settings-rc
+	RSYNC ~/.profile
+	RSYNC ~/.pythonrc
+	RSYNC ~/.screenrc
+	RSYNC ~/.vimperatorrc
+	RSYNC ~/.vimrc
+	RSYNC ~/.xdvirc
+	RSYNC ~/.xfce4_autostart
+	RSYNC ~/.xinitrc
+	RSYNC /boot/grub/grub.cfg
+
+	echo
+	echo "Following source files does not exists."
+	for f in $ERRORLIST;do
+		echo $f
+	done
+}
+
+
+# log file
+logfile=$dest/bk`date +%Y%m%d%H%M`.log
+BACKUP_EXECUTE > "$logfile"
+
+# output to the terminal
+bknum=`grep -c '^/.*[^/]$' "$logfile"`
+failnum=`echo $ERRORLIST | wc -w`
+
+bknum=`expr $bknum - $failnum`
+
+echo "$bknum files were backuped or updated."
+
+if [ -n "$ERRORLIST" ];then
+	echo
+	echo "Following source files does not exists."
+	for f in $ERRORLIST;do
+		echo $f
+	done
+fi
+

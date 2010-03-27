@@ -1,0 +1,56 @@
+#!/bin/bash
+##! bash @%@ ~/Downloads/py\ Pdf\ -\ 1.12.tar.gz
+usage(){
+cat << EOF
+Description:
+	extract an archive file
+Usage:
+	unpack ARCHIVE [DESTINATION]
+Example:
+	unpack myarchive.tar.gz
+	unpack myarchive.tar.gz ~/Desktop
+Formats:
+	7z/bz2/gz/z/zip/rar/lzh/jar/tar/tar.gz2/tar.gz/tbz2/tgz
+EOF
+}
+
+
+if [ $# -lt 1 ];then
+	usage
+	exit
+fi
+
+archive="$1"
+if [ ! -f "$archive" ];then
+	echo "'$archive' is NOT a file."
+	echo
+	usage
+fi
+
+
+if [ $# -eq 2 ];then
+	destination="$2"
+fi
+
+archive_name=`echo "$archive" | tr "[:upper:]" "[:lower:]"`
+
+case "$archive_name" in
+	*.tar.bz2|*.tbz2) command="tar -xvjf" ;;
+	*.tar.bz|*.tbz)   command="tar -xvzf" ;;
+	*.tar.gz|*.tgz)   command="tar -xvzf" ;;
+	*.tar)  command="tar -xvf" ;;
+	*.bz2)  command="bunzip2" ;;
+	*.rar)  command="unrar x" ;;
+	*.gz)   command="gunzip" ;;
+	*.lzh)  command="lha -x" ;;
+	*.zip)  command="unzip" ;;
+	*.jar)  command="jar xf" ;;
+	*.z)    command="uncompress" ;;
+	*.7z)   command="7z x" ;;
+	*) echo "$archive cannot be extracted." ;;
+esac
+
+
+echo "exec: $command"
+echo "----------------------------------"
+exec $command "$archive"

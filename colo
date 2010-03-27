@@ -1,0 +1,18 @@
+#!/bin/bash
+# Terminal Color Viewer (only works on bash)
+esc="\033["
+name=("\t black" "\t red" "\t green" "\t yellow" "\t blue" "\t magenta" " cyan" "\t white")
+for b in {40..47}; do
+	top1="${top1}\t ${esc}$(($b-10))m${b}"
+	top2="${top2}${esc}$(($b-10))m${name[$(($b-40))]}"
+done
+echo -e "$top1\n$top2"
+
+for f in {30..37}; do
+	line1="${esc}01;${f}m${f}${esc}0m\t" line2="\t"
+	for b in {40..47}; do
+		line1="${line1}${esc}${b};${f}m Normal ${esc}0m"
+		line2="${line2}${esc}${b};${f};1m Bold \t${esc}0m"
+	done
+	echo -e "    $line1\n$line2"
+done
